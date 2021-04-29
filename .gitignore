@@ -4,6 +4,8 @@
 # Ignore Gradle build output directory
 build
 
+# Ignore persnal settings
 .idea
 
+# Ignore mac directory file
 .DS_Store
