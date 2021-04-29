@@ -23,42 +23,73 @@ Output: 1
 
 class Solution {
     fun regionsBySlashes(grid: Array<String>): Int {
-        if (grid.isEmpty() || grid.size > 30) throw IllegalStateException()
+        val N = grid.size
+        val qf = UnionFind(4 * N * N)
+        for (i in 0 until N) {
+            for (j in 0 until N) {
+                val root = 4 * (i * N + j)
+                val char: Char = grid[i][j]
 
-        val qf = QuickFind(Array(grid.size) { 0 })
+                if (char != '\\') {
+                    qf.union(root + 0, root + 1)
+                    qf.union(root + 2, root + 3)
+                }
 
-        val sizeDouble = grid.size
-        val temp = Array(sizeDouble) {
-            Array(sizeDouble) {
-                0
-            }
-        }
+                if (char != '/') {
+                    qf.union(root + 0, root + 2)
+                    qf.union(root + 1, root + 3)
+                }
 
-        val space = ' '
-        grid.forEachIndexed { index1, s ->
-            s.forEachIndexed { index2, c ->
-                temp[index1][index2] = when (c) {
-                    space -> 0
-                    '/' -> 1
-                    else -> 2
+                if (i + 1 < N) {
+                    qf.union(root + 3, (root + 4 * N) + 0)
+                }
+                if (i - 1 >= 0) {
+                    qf.union(root + 0, (root - 4 * N) + 3)
+                }
+
+                if (j + 1 < N) {
+                    qf.union(root + 2, (root + 4) + 1)
+                }
+                if (j - 1 >= 0) {
+                    qf.union(root + 1, (root - 4) + 2)
                 }
             }
         }
 
-        return 0
+        return qf.roots
     }
 
-    class QuickFind<T>(private val parent: Array<T>) {
-        fun find(p: Int) = parent[p]
+    class UnionFind(N: Int) {
+        var parent: IntArray = IntArray(N)
+        var size: IntArray = IntArray(N)
+        var roots: Int = N
+        fun root(i: Int): Int {
+            var i = i
+            while (i != parent[i]) {
+                parent[i] = parent[parent[i]] // compress
+                i = parent[i]
+            }
+            return i
+        }
 
         fun union(p: Int, q: Int) {
-            val pId = find(p)
-            val qId = find(q)
+            val rootP = root(p)
+            val rootQ = root(q)
+            if (rootP == rootQ) return
+            roots--
+            if (size[rootP] < size[rootQ]) {
+                parent[rootP] = rootQ
+                size[rootQ] += size[rootP]
+            } else {
+                parent[rootQ] = rootP
+                size[rootP] += size[rootQ]
+            }
+        }
 
-            if (pId == qId) return
-
-            parent.forEachIndexed { index, _ ->
-                if (parent[index] == pId) parent[index] = qId
+        init {
+            for (i in 0 until N) {
+                parent[i] = i
+                size[i] = 1
             }
         }
     }
@@ -66,8 +97,8 @@ class Solution {
 
 fun main() {
     Solution().apply {
-        regionsBySlashes(arrayOf(" /", "/ ")) // 2
-        regionsBySlashes(arrayOf("""/\""", """\/""")) // 5
-        regionsBySlashes(arrayOf("//", "/ ")) // 3
+        require(regionsBySlashes(arrayOf(" /", "/ ")) == 2) // 2
+        require(regionsBySlashes(arrayOf("/\\", "\\/")) == 5) // 5
+        require(regionsBySlashes(arrayOf("//", "/ ")) == 3) // 3
     }
 }
