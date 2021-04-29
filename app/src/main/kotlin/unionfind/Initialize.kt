@@ -1,3 +1,0 @@
-package unionfind
-
-object Initialize
